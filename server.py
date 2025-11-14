@@ -56,19 +56,20 @@ def main():
                             else:
                                 close_conn(sock, logged_in, socks, soc_to_msg)
                         else:
-                            if req== Command.QUIT.value:
+                            if req.strip() == Command.QUIT.value:
                                 close_conn(sock, logged_in, socks, soc_to_msg)
                             else:
                                 command,val = req.split(":")
+                                val=val.strip()
                                 ret=""
                                 match command:
                                     case Command.LCM.value:
-                                        x,y=val.strip().split(" ")
+                                        x,y=val.split(" ")
                                         ret=lcm(int(x),int(y))
-                                    case Command.CEASER.value:
-                                        text,num=val.split(" ")
+                                    case Command.CAESAR.value:
+                                        text,num=val.rsplit(" ",1) # number is the last, rest is the text
                                         ret = caesar_cipher(text,int(num))
-                                    case Command.PARENTHESIS.value:
+                                    case Command.PARENTHESES.value:
                                         ret=is_balanced_parentheses(val)
                                 if ret!="":
                                     soc_to_msg[sock]=helper.string_to_binary(ret)
@@ -87,6 +88,7 @@ def close_conn(sock,logged_in,socks,soc_to_msg):
     if logged_in[sock]: del logged_in[sock]
     if soc_to_msg[sock]: del soc_to_msg[sock]
     socks.remove(sock)
+    print("closing conn")
     sock.close()
 
 def check_login(params,db):

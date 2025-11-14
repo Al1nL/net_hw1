@@ -13,7 +13,7 @@ def main():
             req ="welcome"
             res=login(clientSock)
             if res:
-                while req!="quit":
+                while req.strip()!=Command.QUIT.value:
                     req =  sys.stdin.readline()
                     if checkCommand(req,clientSock):
                         helper.sendall(clientSock,helper.string_to_binary(req))
@@ -26,22 +26,28 @@ def main():
 def login(clientSock):
       err=False
       count=0
-      while not err and count<=2 or answer =="Failed to login.":
-        answer = helper.binary_to_string(helper.recvall(clientSock))
+      answer = helper.binary_to_string(helper.recvall(clientSock))
+      while count<=2 or answer =="Failed to login.":
         print(answer)
         if answer.find("Hi")!=-1: return True
-
         count=1
         req = sys.stdin.readline()
         helper.sendall(clientSock, helper.string_to_binary(req))
-        if b''==helper.recvall(clientSock):
-            err=True
-            return False
+        answer = helper.binary_to_string(helper.recvall(clientSock))
+        if not checkErr(answer): return False
         count+=1
         req = sys.stdin.readline()
         helper.sendall(clientSock, helper.string_to_binary(req))
+        answer = helper.binary_to_string(helper.recvall(clientSock))
+        if not checkErr(answer): return False
+
       return True
 
+def checkErr(result):
+    if '' == result:
+        err = True
+        return False
+    return True
 def checkCommand(cmd: str, sock):
     cmd = cmd.strip()  # remove leading/trailing spaces and newline
 
@@ -74,11 +80,11 @@ def checkCommand(cmd: str, sock):
                 sock.close()
                 return False
 
-        case Command.CEASER.value:
+        case Command.CAESAR.value:
             # Expect text and a number
-            parts = val.split()
+            parts = val.rsplit(" ",1)
             if len(parts) != 2:
-                print("Illegal CEASER command, closing session")
+                print("Illegal CAESAR command, closing session")
                 sock.close()
                 return False
             text, num_str = parts
@@ -89,7 +95,7 @@ def checkCommand(cmd: str, sock):
                 sock.close()
                 return False
 
-        case Command.PARENTHESIS.value:
+        case Command.PARENTHESES.value:
             # Ensure val only contains '(' and ')'
             if not all(c in "()" for c in val):
                 print("Illegal PARENTHESIS command, closing session")
