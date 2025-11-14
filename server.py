@@ -2,6 +2,7 @@ import socket
 import select
 import helper
 import sys
+from helper import Command
 
 HOST = "localhost"
 PORT = 1337
@@ -37,7 +38,7 @@ def main():
                         if sock not in logged_in:
                             if req.find("User: ")!=-1:
                                 logged_in[sock]=[req.split(":", 1)[1].strip()]
-
+                                soc_to_msg[sock]=helper.string_to_binary("proccess_login")
                             else:
                                 close_conn(sock, logged_in, socks, soc_to_msg)
 
@@ -45,6 +46,7 @@ def main():
                             if req.find("Password: ")!=-1:
                                 logged_in[sock].append(req.split(":", 1)[1].strip())
                                 check=check_login(logged_in[sock],users_db)
+                                print("checking password")
                                 if check:
                                     print("logged in")
                                     soc_to_msg[clientSock] = helper.string_to_binary(f"Hi {logged_in[sock][0]}, good to see you.\n")
@@ -53,23 +55,40 @@ def main():
                                     soc_to_msg[clientSock] = helper.string_to_binary("Failed to login.\n")
                             else:
                                 close_conn(sock, logged_in, socks, soc_to_msg)
-
-
+                        else:
+                            if req== Command.QUIT.value:
+                                close_conn(sock, logged_in, socks, soc_to_msg)
+                            else:
+                                command,val = req.split(":")
+                                ret=""
+                                match command:
+                                    case Command.LCM.value:
+                                        x,y=val.strip().split(" ")
+                                        ret=lcm(int(x),int(y))
+                                    case Command.CEASER.value:
+                                        text,num=val.split(" ")
+                                        ret = caesar_cipher(text,int(num))
+                                    case Command.PARENTHESIS.value:
+                                        ret=is_balanced_parentheses(val)
+                                if ret!="":
+                                    soc_to_msg[sock]=helper.string_to_binary(ret)
 
                 for sock in writable:
                     msg = soc_to_msg.get(sock, b"")
-                    print(msg)
                     if len(msg)>0:
                         total = helper.sendall(sock, msg)
                         if total == len(msg+b"\0"): #todo: else error
-                            print("done")
                             soc_to_msg[sock] = b""
 
 
     except Exception as e:
         print(e)
-def close_conn(sock,logged_in,socks,soc_to_msg): #todo
-    pass
+def close_conn(sock,logged_in,socks,soc_to_msg):
+    if logged_in[sock]: del logged_in[sock]
+    if soc_to_msg[sock]: del soc_to_msg[sock]
+    socks.remove(sock)
+    sock.close()
+
 def check_login(params,db):
     return db[params[0]]==params[1]
 
@@ -104,7 +123,7 @@ def gcd(a, b):
         a, b = b, a % b
     return abs(a)
 def lcm(X, Y):
-    return 'the lcm is: ' + abs(X * Y) // gcd(X, Y)
+    return 'the lcm is: ' + str(abs(X * Y) // gcd(X, Y))
 
 def caesar_cipher(text, num):
     result = []
