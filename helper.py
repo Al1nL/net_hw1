@@ -1,7 +1,7 @@
 def sendall(soc, data):
+    data=data+b"\0"
     total_sent = 0
     sent = 0
-
     while sent < len(data):
         sent = soc.send(data[total_sent:])
         if sent == 0:
@@ -18,8 +18,8 @@ def recvall(soc): # gets msg+\n
             break
         total_recv += data
     # remove \0
-    return total_recv.replace(b"\0", b"")
-
+    msg ,_,_ = total_recv.partition(b"\0")
+    return msg
 def string_to_binary(data):
     return data.encode('utf-8')
 
