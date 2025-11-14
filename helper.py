@@ -1,3 +1,8 @@
+from enum import Enum
+
+COMMANDS = {"quit","lcm","parentheses","caesar"}
+Command = Enum('Command', {cmd.upper(): cmd for cmd in COMMANDS})
+
 def sendall(soc, data):
     data=data+b"\0"
     total_sent = 0
@@ -7,7 +12,6 @@ def sendall(soc, data):
         if sent == 0:
             raise ConnectionError("Socket connection broken during send")
         total_sent = total_sent + sent
-
     return total_sent
 
 def recvall(soc): # gets msg+\n
